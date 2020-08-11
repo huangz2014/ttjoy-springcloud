@@ -1,0 +1,84 @@
+apply plugin: 'java'
+//apply plugin: 'application'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+//application {
+//    // Define the main class for the application.
+//    mainClassName = 'com.ttjoy.gateway.DemoGatewayApplication'
+//}
+
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+}
+// 将源码打包
+task sourceJar (type:Jar) {
+        /** allSource包含资源文件 */
+    from sourceSets.main.allSource
+    /** allJava只包含java文件 */
+//    from sourceSets.main.allJava
+    /** 生成jar包的后缀名称*/
+    archiveClassifier = 'sources'
+}
+
+// 生成JavaDoc
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+}
+// 此处只是将jar，sourceJar，docJar生成到build目录和安装到本地maven仓库
+artifacts {
+    archives bootJar
+    archives sourceJar
+    archives javadocJar
+}
+// 方法一
+// 使用maven-publish插件
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+
+            groupId("${project.group}")
+            artifactId("${project.name }")
+            version("${project.version}")
+            /** 此处是将jar，sourceJar，docJar上传到maven私服 */
+            artifact bootJar
+            artifact sourceJar
+            artifact javadocJar
+        }
+    }
+    repositories {
+        maven {
+            /** 指定要上传的maven私服仓库*/
+            def releasesRepoUrl = "http://localhost:8082/artifactory/ttjoy-releases/"
+            def snapshotsRepoUrl = "http://localhost:8082/artifactory/ttjoy-snapshot/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            /** 认证用户和密码 */
+            credentials {
+                username 'admin'
+                password 'a11111111'
+            }
+        }
+    }
+}
+// 方法二
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://localhost:8082/artifactory/ttjoy-snapshot/"){
+                // nexus登录默认用户名和密码
+                authentication(userName: "admin", password: "a11111111")
+            }
+            pom.project {
+                pom.groupId = "org.ttjoy"// 唯一标识（通常为模块包名，也可以任意）
+                pom.artifactId = "demo-gateway" // 项目名称（通常为类库模块名称，也可以任意）
+                pom.version = "1.1.0-snapshot" // 版本号
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

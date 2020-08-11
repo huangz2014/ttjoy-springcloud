@@ -13,6 +13,7 @@
 .gradle/
 .idea
 gradlew
+gradle
 gradlew.bat
 
 # Package Files #
