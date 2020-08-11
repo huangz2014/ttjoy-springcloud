@@ -1,0 +1,5 @@
+rootProject.name = 'demo-parent'
+
+include 'demo-gateway'
+include 'demo-api'
+

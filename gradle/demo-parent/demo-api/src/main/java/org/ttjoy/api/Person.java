@@ -23,8 +23,4 @@ public class Person {
     public void setPhone(String phone) {
         this.phone = phone;
     }
-
-    public static void main(String[] args) {
-
-    }
 }

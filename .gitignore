@@ -13,8 +13,11 @@
 .gradle/
 .idea
 gradlew
-gradle
 gradlew.bat
+build/
+*/**/.gradle
+*/**/.gradle/
+
 
 # Package Files #
 *.jar
