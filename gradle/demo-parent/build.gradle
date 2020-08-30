@@ -1,0 +1,181 @@
+buildscript {
+    /*定义环境变量*/
+    ext {
+//        springIOVersion = '1.0.0.RELEASE'
+        springBootVersion = '2.3.2.RELEASE'
+        springCloudVersion = 'Hoxton.SR6'
+
+    }
+    /*脚本运行的依赖*/
+    repositories {
+        mavenLocal()
+        mavenCentral()
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+//        maven { url "http://repo.spring.io/snapshot" }
+//        maven { url "http://repo.spring.io/milestone" }
+        maven { url 'http://maven.springframework.org/release' }
+//        maven { url 'http://maven.springframework.org/milestone' }
+    }
+
+    /*定义依赖的springboot版本*/
+    dependencies {
+//        classpath "io.spring.gradle:dependency-management-plugin:${springIOVersion}"
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}" as Object)
+    }
+
+
+}
+
+//所有的工程都会执行这个task
+allprojects {
+//    apply plugin: 'maven'
+//    apply plugin: 'maven-publish'
+
+//    group 'org.ttjoy'
+    /* 项目版本 */
+//    version '0.0.1-SNAPSHOT'
+
+//    task sourcesJar (type:Jar) {
+//        archiveClassifier = 'sources'
+//    }
+
+    //设置任务依赖关系,打jar包的同时,打源码包
+//    jar.dependsOn(sourcesJar)
+
+    /**
+     * 默认使用gradlew clean install命令时,仅仅只是安装编译好的包,源码包
+     * 是不会安装到maven仓库的,添加此配置可以将源码包打入到本地maven仓库
+     * doc包也可以如法炮制
+     */
+//    artifacts {
+//        archives sourcesJar
+//    }
+    //    这些模块不应用 springboot插件
+    if (!name.endsWith("api")) {
+        apply plugin: 'org.springframework.boot'
+        apply plugin: 'io.spring.dependency-management'
+    }
+}
+/**定义只有子工程才会执行的task*/
+subprojects {
+    /* 使用二进制插件 */
+    apply plugin: 'java' /* java是Gradle的核心插件，是内置的，内置插件不需要配置依赖路径 */
+    apply plugin: 'idea' /* 同上  让Gradle自动生成Intellij的项目文件*/
+    apply plugin: 'maven'
+
+    group 'org.ttjoy'
+    /* 项目版本 */
+    version '0.0.2'
+
+    ext {
+//        springIOVersion = '1.0.0.RELEASE'
+        springBootVersion = '2.3.2.RELEASE'
+        springCloudVersion = 'Hoxton.SR6'
+        compileJava.options.encoding = 'UTF-8'
+        compileTestJava.options.encoding = 'UTF-8'
+        lombokVersion = '1.18.12'
+
+    }
+
+    repositories {
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+
+    //插件
+    if (!name.endsWith("api")) {
+        /* 注意gradle插件不再自动应用，所以这里需要指定 */
+        apply plugin: 'org.springframework.boot'
+        /* 依赖管理插件仍然是一个spring-boot-gradle-plugin传递依赖，所以无需在build.gradle配置中明确列出此依赖。 */
+        apply plugin: 'io.spring.dependency-management' /* 依赖管理，用来传递spring的依赖 */
+    }
+
+    /* 指定jdk版本 */
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+    /* java编译的时候缺省状态下会因为中文字符而失败 */
+    [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    //在这里定义公用依赖
+    dependencies {
+        /**热部署和lombok*/
+        /** runtimeOnly,  弃用配置 apk
+         *  依赖项仅在运行时对模块及其消费者可用
+         */
+        if (!name.endsWith("api")) {
+            runtimeOnly 'org.springframework.boot:spring-boot-devtools'
+        } else {
+            annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+            /** compileOnly,  弃用配置 provided
+             *  依赖项仅在编译时对模块可用，并且在编译或运行时对其消费者不可用。
+             *  此配置的行为类似于 provided（现在已弃用）
+             */
+            compileOnly("org.projectlombok:lombok:${lombokVersion}")
+            testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+            testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
+        }
+
+
+        if (!name.endsWith("api")) {
+            developmentOnly 'org.springframework.boot:spring-boot-devtools'
+            annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+            testImplementation('org.springframework.boot:spring-boot-starter-test') {
+                exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+            }
+        }
+
+        /** implementation,  弃用配置compile
+         *  依赖项在编译时对模块可用，并且仅在运行时对模块的消费者可用。
+         *  对于大型多项目构建，使用 implementation 而不是 api/compile 可以显著缩短构建时间，
+         *  因为它可以减少构建系统需要重新编译的项目量。 大多数应用和测试模块都应使用此配置
+         */
+        implementation('org.apache.commons:commons-lang3:3.8')
+
+        /** api,  弃用配置compile
+         *  依赖项在编译时对模块可用，并且在编译时和运行时还对模块的消费者可用。
+         *  此配置的行为类似于 compile（现在已弃用），一般情况下，您应当仅在库模块中使用它。
+         *  应用模块应使用 implementation，除非您想要将其 API 公开给单独的测试模块。
+         */
+//        implementation('com.alibaba:fastjson:1.2.47')
+
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+
+//    jar {
+//        manifest.attributes provider: 'gradle'
+//    }
+}
+//在这里给具体的子工程添加自定义的task，也可以在子工程的build.gradle里面添加.
+//project(':subproject1') {
+//    dependencies {
+//        implementation('org.springframework.boot:spring-boot-starter-web')
+//        implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.0.0'
+//        implementation('mysql:mysql-connector-java')
+//        implementation 'org.springframework.boot:spring-boot-starter-security'
+//        implementation('com.auth0:java-jwt:3.4.0')
+//
+//        testImplementation('org.springframework.boot:spring-boot-starter-test')
+//        testImplementation 'org.springframework.security:spring-security-test'
+//    }
+//}

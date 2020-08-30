@@ -2,9 +2,6 @@ package com.ttjoy.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.gateway.route.RouteLocator;
-import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class DemoGatewayApplication {
@@ -29,11 +26,16 @@ public class DemoGatewayApplication {
      * RemoteAddrRoutePredicateFactory                  请求远程地址匹配指定值
      * @param builder
      * @return
-     */
+
     @Bean
     public RouteLocator customerRouterLocator(RouteLocatorBuilder builder){
+        System.out.println("123");
         return builder.routes()
-                .route("path_route",r -> r.path("/").uri("https://www.baidu.com"))
+//                .route("path_route",r -> r.path("/").uri("http://localhost:8080/demo/info"))
+                .route("path_route",r -> r.path("/demo/**").uri("lb://server/demo"))
+//                .route("path_route",r -> r.path("/").uri("https://www.baidu.com"))
                 .build();
     }
+     */
+
 }
